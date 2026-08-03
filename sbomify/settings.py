@@ -568,9 +568,15 @@ AUTH_PASSWORD_VALIDATORS = [
 #
 # Harmless for static assets: the bytes are correct and the files are small. Note the
 # fallback calls list() on the iterator, so the body is fully buffered rather than
-# streamed -- fine here, but it is the reason this filter is pinned to this exact
-# message instead of silencing the warning class. If a large response is ever streamed
-# through a sync iterator, we want that warning to surface.
+# streamed -- fine for static assets, which are small.
+#
+# Be aware this is global, not scoped to WhiteNoise: Django raises the same message
+# from StreamingHttpResponse.__aiter__ for any synchronous iterator under ASGI, so an
+# application endpoint that streams a large response will have this warning hidden
+# too, along with the buffering it is telling us about. Filtering cannot distinguish
+# them -- the message is identical and the raising module is django.http.response
+# either way. If we add real streaming endpoints, revisit this rather than assume the
+# warning would have surfaced.
 warnings.filterwarnings(
     "ignore",
     # Anchored at both ends and with the periods escaped, so this suppresses
