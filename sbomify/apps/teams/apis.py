@@ -179,8 +179,6 @@ def update_team_branding_field(
     Note: 'team_key' parameter name is kept for backward compatibility and represents the workspace key.
     """
 
-    user = cast(User, request.user)
-
     # Validate field name
     valid_fields = {"brand_color", "accent_color", "prefer_logo_over_icon", "icon", "logo"}
     if field not in valid_fields:
@@ -191,10 +189,6 @@ def update_team_branding_field(
     except (ValueError, Team.DoesNotExist):
         logger.warning(f"Workspace not found: {team_key}")
         return 404, {"detail": "Workspace not found"}
-
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        logger.warning(f"User {user.username} is not owner of team {team_key}")
-        return 403, {"detail": "Only allowed for owners"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}
@@ -261,18 +255,12 @@ def update_team_branding(
     team_key: str,
     payload: UpdateTeamBrandingSchema,
 ) -> tuple[int, Any]:
-    user = cast(User, request.user)
-
     # TODO: has to be in middleware or decorator or anything else
     try:
         team = Team.objects.get(pk=token_to_number(team_key))
     except (ValueError, Team.DoesNotExist):
         logger.warning(f"Workspace not found: {team_key}")
         return 404, {"detail": "Workspace not found"}
-
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        logger.warning(f"User {user.username} is not owner of team {team_key}")
-        return 403, {"detail": "Only allowed for owners"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}
@@ -337,8 +325,6 @@ def upload_branding_file(
 
     Note: 'team_key' parameter name is kept for backward compatibility and represents the workspace key.
     """
-    user = cast(User, request.user)
-
     if file_type not in ["icon", "logo"]:
         return 400, {"detail": "Invalid file type. Must be 'icon' or 'logo'"}
 
@@ -346,9 +332,6 @@ def upload_branding_file(
         team = Team.objects.get(pk=token_to_number(team_key))
     except (ValueError, Team.DoesNotExist):
         return 404, {"detail": "Workspace not found"}
-
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        return 403, {"detail": "Only allowed for owners"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}
@@ -1014,8 +997,6 @@ def update_team(request: HttpRequest, team_key: str, payload: TeamUpdateSchema) 
 
     Note: 'team_key' parameter name is kept for backward compatibility and represents the workspace key.
     """
-    user = cast(User, request.user)
-
     try:
         team_id = token_to_number(team_key)
     except ValueError:
@@ -1025,10 +1006,6 @@ def update_team(request: HttpRequest, team_key: str, payload: TeamUpdateSchema) 
         team = Team.objects.get(pk=team_id)
     except Team.DoesNotExist:
         return 404, {"detail": "Workspace not found"}
-
-    # Check if user is owner
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        return 403, {"detail": "Only owners can update team information"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}
@@ -1063,8 +1040,6 @@ def patch_team(request: HttpRequest, team_key: str, payload: TeamPatchSchema) ->
 
     Note: 'team_key' parameter name is retained for backward compatibility and represents the workspace key.
     """
-    user = cast(User, request.user)
-
     try:
         team_id = token_to_number(team_key)
     except ValueError:
@@ -1074,10 +1049,6 @@ def patch_team(request: HttpRequest, team_key: str, payload: TeamPatchSchema) ->
         team = Team.objects.get(pk=team_id)
     except Team.DoesNotExist:
         return 404, {"detail": "Workspace not found"}
-
-    # Check if user is owner
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        return 403, {"detail": "Only owners can update team information"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}
@@ -1123,8 +1094,6 @@ def update_team_domain(request: HttpRequest, team_key: str, payload: TeamDomainS
     from sbomify.apps.teams.utils import invalidate_custom_domain_cache
     from sbomify.apps.teams.validators import validate_custom_domain
 
-    user = cast(User, request.user)
-
     try:
         team_id = token_to_number(team_key)
     except ValueError:
@@ -1134,10 +1103,6 @@ def update_team_domain(request: HttpRequest, team_key: str, payload: TeamDomainS
         team = Team.objects.get(pk=team_id)
     except Team.DoesNotExist:
         return 404, {"detail": "Workspace not found"}
-
-    # Check if user is owner
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        return 403, {"detail": "Only owners can update team domain"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}
@@ -1204,8 +1169,6 @@ def delete_team_domain(request: HttpRequest, team_key: str) -> tuple[int, Any]:
     """Remove workspace custom domain."""
     from sbomify.apps.teams.utils import invalidate_custom_domain_cache
 
-    user = cast(User, request.user)
-
     try:
         team_id = token_to_number(team_key)
     except ValueError:
@@ -1215,10 +1178,6 @@ def delete_team_domain(request: HttpRequest, team_key: str) -> tuple[int, Any]:
         team = Team.objects.get(pk=team_id)
     except Team.DoesNotExist:
         return 404, {"detail": "Workspace not found"}
-
-    # Check if user is owner
-    if not Member.objects.filter(user=user, team=team, role="owner").exists():
-        return 403, {"detail": "Only owners can update team domain"}
 
     if not can(request, "workspace:administer", team):
         return 403, {"detail": "Forbidden", "error_code": ErrorCode.FORBIDDEN}

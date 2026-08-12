@@ -302,7 +302,7 @@
                     </a>
                 </li>
                 {# Plugins — visible to owner/admin only #}
-                {% if request.session.current_team.role == "owner" or request.session.current_team.role == "admin" %}
+                {% if can_administer %}
                     <li>
                         {# Collapsed #}
                         <a x-show="sidebarCollapsed"

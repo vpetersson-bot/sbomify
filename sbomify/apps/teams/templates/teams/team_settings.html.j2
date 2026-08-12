@@ -37,7 +37,7 @@
             <div class="w-full lg:w-64 flex-shrink-0">
                 <nav id="settings-tabs" aria-label="Settings navigation">
                     <div class="flex flex-row lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0">
-                        {% if request.session.current_team.role == 'owner' %}
+                        {% if can_administer %}
                             <a href="#general"
                                data-tab="general"
                                class="settings-tab-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-muted hover:bg-primary/5 hover:text-text transition-all whitespace-nowrap">
@@ -66,7 +66,7 @@
                             </div>
                             <span class="font-medium">API Tokens</span>
                         </a>
-                        {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
+                        {% if can_administer %}
                             <a href="#contact-profiles"
                                data-tab="contact-profiles"
                                class="settings-tab-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-muted hover:bg-primary/5 hover:text-text transition-all whitespace-nowrap">
@@ -76,7 +76,7 @@
                                 <span class="font-medium">Contacts</span>
                             </a>
                         {% endif %}
-                        {% if request.session.current_team.role == 'owner' %}
+                        {% if can_administer %}
                             <a href="#trust-center"
                                data-tab="trust-center"
                                class="settings-tab-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-muted hover:bg-primary/5 hover:text-text transition-all whitespace-nowrap">
@@ -86,7 +86,7 @@
                                 <span class="font-medium">Trust Center</span>
                             </a>
                         {% endif %}
-                        {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
+                        {% if can_administer %}
                             <a href="#branding"
                                data-tab="branding"
                                class="settings-tab-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-muted hover:bg-primary/5 hover:text-text transition-all whitespace-nowrap">
@@ -96,7 +96,7 @@
                                 <span class="font-medium">Branding</span>
                             </a>
                         {% endif %}
-                        {% if billing_enabled and request.session.current_team.role == 'owner' %}
+                        {% if billing_enabled and can_administer %}
                             <a href="#billing"
                                data-tab="billing"
                                class="settings-tab-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-muted hover:bg-primary/5 hover:text-text transition-all whitespace-nowrap">
@@ -119,25 +119,25 @@
             </div>
             {# Tab Content #}
             <div class="flex-1 min-w-0">
-                {% if request.session.current_team.role == 'owner' %}
+                {% if can_administer %}
                     <div class="settings-tab-pane hidden" id="general">{% include "teams/team_settings_tabs/general.html.j2" %}</div>
                 {% endif %}
                 <div class="settings-tab-pane hidden" id="members">{% include "teams/team_settings_tabs/members.html.j2" %}</div>
                 <div class="settings-tab-pane hidden" id="tokens">{% include "teams/team_settings_tabs/tokens.html.j2" %}</div>
-                {% if request.session.current_team.role == 'owner' %}
+                {% if can_administer %}
                     <div class="settings-tab-pane hidden" id="trust-center">
                         {% include "teams/team_settings_tabs/trust_center.html.j2" %}
                     </div>
                 {% endif %}
-                {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
+                {% if can_administer %}
                     <div class="settings-tab-pane hidden" id="contact-profiles">
                         {% include "teams/team_settings_tabs/contact_profiles.html.j2" %}
                     </div>
                 {% endif %}
-                {% if billing_enabled and request.session.current_team.role == 'owner' %}
+                {% if billing_enabled and can_administer %}
                     <div class="settings-tab-pane hidden" id="billing">{% include "teams/team_settings_tabs/billing.html.j2" %}</div>
                 {% endif %}
-                {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
+                {% if can_administer %}
                     <div class="settings-tab-pane hidden" id="branding">{% include "teams/team_settings_tabs/branding.html.j2" %}</div>
                 {% endif %}
                 <div class="settings-tab-pane hidden" id="account">{% include "teams/team_settings_tabs/account.html.j2" %}</div>
@@ -145,7 +145,7 @@
         </div>
     </div>
     {# Access Request Modals - at page level to avoid hidden tab pane issues #}
-    {% if request.session.current_team.role == 'owner' and team.is_public %}
+    {% if can_administer and team.is_public %}
         {# Invite User Modal #}
         <div x-data="{ open: false }"
              @open-invite-user-modal.window="open = true"
@@ -607,18 +607,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Get available tabs
             const availableTabs = ['members', 'tokens'];
-            {% if request.session.current_team.role == 'owner' %}availableTabs.unshift('general');{% endif %}
-            {% if request.session.current_team.role == 'owner' %}availableTabs.push('trust-center');{% endif %}
-            {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
-                availableTabs.push('controls');
-            {% endif %}
-            {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
-                availableTabs.push('contact-profiles');
-            {% endif %}
-            {% if billing_enabled and request.session.current_team.role == 'owner' %}availableTabs.push('billing');{% endif %}
-            {% if request.session.current_team.role == 'owner' or request.session.current_team.role == 'admin' %}
-                availableTabs.push('branding');
-            {% endif %}
+            {% if can_administer %}availableTabs.unshift('general');{% endif %}
+            {% if can_administer %}availableTabs.push('trust-center');{% endif %}
+            {% if can_administer %}availableTabs.push('controls');{% endif %}
+            {% if can_administer %}availableTabs.push('contact-profiles');{% endif %}
+            {% if billing_enabled and can_administer %}availableTabs.push('billing');{% endif %}
+            {% if can_administer %}availableTabs.push('branding');{% endif %}
             availableTabs.push('account');
 
             const activeTabInputs = document.querySelectorAll('input[name="active_tab"]');
