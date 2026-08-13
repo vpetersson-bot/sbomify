@@ -79,9 +79,13 @@ class TestTruncationKeepsBothEnds:
         assert "panic: runtime error: invalid memory address" in collapsed
 
     def test_the_result_is_bounded(self) -> None:
+        """Bounded by the content budget plus the omission marker, not by the
+        budget alone — the marker is added on top, which the constant's comment
+        now says outright."""
         collapsed = _collapse_for_log("x" * 100_000)
 
-        assert len(collapsed) <= _STDERR_LOG_LIMIT + 60  # + the omission marker
+        overhead = len(collapsed) - _STDERR_LOG_LIMIT
+        assert 0 < overhead < 60, f"unexpected marker overhead: {overhead}"
 
     def test_truncation_is_visible_and_says_how_much(self) -> None:
         collapsed = _collapse_for_log("x" * 100_000)

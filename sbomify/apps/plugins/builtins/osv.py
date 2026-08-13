@@ -34,9 +34,14 @@ from sbomify.logging import getLogger
 
 logger = getLogger(__name__)
 
-# Ceiling on how much captured stderr reaches a log line. Generous enough that
-# a real scanner failure fits whole, bounded so a scanner looping on per-package
-# warnings cannot emit a megabyte-wide record.
+# Budget for the captured stderr *content* in a log line. Generous enough that
+# a real scanner failure fits whole, bounded so a scanner looping on
+# per-package warnings cannot emit a megabyte-wide record.
+#
+# Not a hard cap on the returned string: when truncation applies, the omission
+# marker is added on top of this, so the result is a little longer. Said
+# explicitly because a test or later change assuming a strict ceiling would be
+# wrong by exactly that marker.
 _STDERR_LOG_LIMIT = 2000
 
 # How much of that budget the head keeps when the output is longer. A panic
