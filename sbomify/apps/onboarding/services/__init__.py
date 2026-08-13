@@ -263,8 +263,9 @@ class OnboardingEmailService:
                 # state, not a gap, and is a plausible source of the skipped
                 # count in the first place. Backfilling them would resurrect a
                 # row an operator deleted, on every run, and list a bot among
-                # onboarding users. Checked with the same helper signals.py and
-                # _is_mailable use, so the three cannot drift.
+                # onboarding users. Decided by is_synthetic_bot_user, which is
+                # what onboarding.signals and _is_mailable each call too, so the
+                # three answer the same question the same way.
                 if not _is_mailable(member.user):
                     continue
 
@@ -276,10 +277,12 @@ class OnboardingEmailService:
                 # every run and the count never converged or said who.
                 #
                 # Backdated to the account rather than to now. created_at is
-                # what days_since_signup and the drip anchor are computed from,
-                # so a fresh row would show "0 days since signup" on the admin
-                # screen for someone who joined years ago, and would restart the
-                # drip at day 0 if welcome_email_sent were ever set.
+                # what days_since_signup is computed from, and what the drip
+                # falls back to when drip_started_at is unset — which it is on a
+                # fresh row. So a row stamped now would show "0 days since
+                # signup" on the admin screen for someone who joined years ago,
+                # and would start the drip at day 0 if welcome_email_sent were
+                # ever set.
                 status, created = OnboardingStatus.objects.get_or_create(user=member.user)
                 if created:
                     joined = getattr(member.user, "date_joined", None)
