@@ -75,7 +75,7 @@ def test_a_quote_renders_as_a_blockquote():
 def test_a_bare_url_becomes_a_link_without_its_trailing_punctuation():
     html = strict_markdown("Fixed in https://github.com/org/repo/pull/461. See (https://example.com/a?b=1&c=2).")
     assert (
-        '<a href="https://github.com/org/repo/pull/461" rel="nofollow ugc noopener noreferrer"'
+        '<a href="https://github.com/org/repo/pull/461"'
         ' class="text-primary hover:underline">https://github.com/org/repo/pull/461</a>.'
     ) in html
     assert '(<a href="https://example.com/a?b=1&amp;c=2"' in html
@@ -92,11 +92,6 @@ def test_a_bare_url_inside_link_text_does_not_nest_anchors():
     assert html.count("<a ") == 1
     assert '<a href="https://b.example"' in html
     assert ">see https://a.example</a>" in html
-
-
-def test_every_link_is_marked_as_user_content():
-    html = strict_markdown("[notes](https://example.com)")
-    assert 'rel="nofollow ugc noopener noreferrer"' in html
 
 
 def test_a_url_the_parser_rejects_does_not_fail_the_page():

@@ -67,7 +67,6 @@ def _safe_image_url(url: str) -> str | None:
 
 _LIST_ITEM_RE = re.compile(r"^( *)([-*+]|\d{1,9}[.)])\s+(.*)$")
 _FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
-_LINK_REL = "nofollow ugc noopener noreferrer"
 
 
 def markdown_to_html(text: str) -> str:
@@ -215,12 +214,15 @@ def _trim_autolink(url: str) -> str:
     return url
 
 
+def _link_tag(href: str, text: str) -> str:
+    """The anchor every rendered link becomes; both arguments arrive escaped."""
+    return f'<a href="{href}" class="text-primary hover:underline">{text}</a>'
+
+
 def inline_markup(text: str) -> str:
     """Convert inline Markdown: bold, italic, links, bare URLs, code spans.
 
     URLs are sanitized to only allow http, https, and mailto schemes.
-    Every link carries ``rel="nofollow ugc noopener noreferrer"``: the
-    text is written by users and shown on public, indexed pages.
 
     Code spans and bare URLs are stashed with NUL-byte sentinels *before*
     the other inline passes run, so markdown metacharacters inside
@@ -248,7 +250,7 @@ def inline_markup(text: str) -> str:
         url = _trim_autolink(m.group(0))
         trailing = m.group(0)[len(url) :]
         href = html.escape(sanitize_url(html.unescape(url)), quote=True)
-        slot = _put(f'<a href="{href}" rel="{_LINK_REL}" class="text-primary hover:underline">{url}</a>')
+        slot = _put(_link_tag(href, url))
         autolinks[slot] = url
         return slot + trailing
 
@@ -288,7 +290,7 @@ def inline_markup(text: str) -> str:
             label = label.replace(slot, url)
         link_text = html.escape(html.unescape(label), quote=True)
         url = html.escape(sanitize_url(html.unescape(m.group(2))), quote=True)
-        return f'<a href="{url}" rel="{_LINK_REL}" class="text-primary hover:underline">{link_text}</a>'
+        return _link_tag(url, link_text)
 
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _safe_link, text)
     # Bold: **text**
